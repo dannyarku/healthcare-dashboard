@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Healthcare Analytics Dashboard — Korle Bu Teaching Hospital</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --surface-0: #f4f3ef;
+      --surface-1: #f0efeb;
+      --surface-2: #ffffff;
+      --text-primary: #0b0b0b;
+      --text-secondary: #52514e;
+      --text-muted: #898781;
+      --border: rgba(11,11,11,0.10);
+      --border-strong: rgba(11,11,11,0.18);
+      --border-accent: #85b7eb;
+      --bg-accent: #e6f1fb;
+      --text-accent: #185fa5;
+      --bg-success: #eaf3de;
+      --text-success: #3b6d11;
+      --bg-warning: #faeeda;
+      --text-warning: #854f0b;
+      --bg-danger: #fcebeb;
+      --text-danger: #a32d2d;
+      --radius: 8px;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      --grid-color: #e1e0d9;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface-0: #111110;
+        --surface-1: #1a1a19;
+        --surface-2: #242423;
+        --text-primary: #ffffff;
+        --text-secondary: #c3c2b7;
+        --text-muted: #898781;
+        --border: rgba(255,255,255,0.10);
+        --border-strong: rgba(255,255,255,0.18);
+        --border-accent: #0c447c;
+        --bg-accent: #042c53;
+        --text-accent: #85b7eb;
+        --bg-success: #173404;
+        --text-success: #97c459;
+        --bg-warning: #412402;
+        --text-warning: #ef9f27;
+        --bg-danger: #501313;
+        --text-danger: #f09595;
+        --grid-color: #2c2c2a;
+      }
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--surface-0);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+    }
+
+    .dash { max-width: 1100px; margin: 0 auto; }
+
+    .top-bar {
+      display: flex; align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.75rem; flex-wrap: wrap; gap: 12px;
+    }
+    .dash-title { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+    .dash-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn {
+      font-size: 12px; padding: 6px 16px; border-radius: 20px;
+      border: 0.5px solid var(--border-strong);
+      background: transparent; color: var(--text-secondary);
+      cursor: pointer; font-family: var(--font-sans);
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { background: var(--surface-1); }
+    .filter-btn.active {
+      background: var(--bg-accent); color: var(--text-accent);
+      border-color: var(--border-accent);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px; margin-bottom: 1.25rem;
+    }
+    .kpi { background: var(--surface-1); border-radius: var(--radius); padding: 14px 16px; }
+    .kpi-label {
+      font-size: 11px; color: var(--text-muted); margin-bottom: 5px;
+      font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .kpi-value { font-size: 26px; font-weight: 500; color: var(--text-primary); line-height: 1; }
+    .kpi-delta { font-size: 12px; margin-top: 5px; display: flex; align-items: center; gap: 3px; }
+    .kpi-delta.up { color: var(--text-success); }
+    .kpi-delta.down { color: var(--text-danger); }
+    .kpi-delta.neutral { color: var(--text-muted); }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px; margin-bottom: 12px;
+    }
+    .chart-card {
+      background: var(--surface-2);
+      border: 0.5px solid var(--border);
+      border-radius: 12px; padding: 1.25rem 1.5rem;
+    }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;
+    }
+    .chart-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .chart-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-secondary); }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+    th {
+      text-align: left; padding: 9px 12px;
+      font-size: 11px; font-weight: 500; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 0.5px solid var(--border);
+    }
+    td { padding: 10px 12px; color: var(--text-primary); border-bottom: 0.5px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface-1); }
+
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 500;
+      padding: 3px 9px; border-radius: 20px;
+    }
+    .badge-success { background: var(--bg-success); color: var(--text-success); }
+    .badge-warning { background: var(--bg-warning); color: var(--text-warning); }
+    .badge-danger { background: var(--bg-danger); color: var(--text-danger); }
+
+    .footer {
+      margin-top: 2rem; padding-top: 1rem;
+      border-top: 0.5px solid var(--border);
+      font-size: 12px; color: var(--text-muted);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 1rem; }
+      .top-bar { flex-direction: column; }
+      .chart-card.wide { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="dash">
+
+  <div class="top-bar">
+    <div>
+      <div class="dash-title">Healthcare analytics dashboard</div>
+      <div class="dash-sub">Korle Bu Teaching Hospital &nbsp;·&nbsp; Q2 2025 &nbsp;·&nbsp; Updated June 2025</div>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All wards</button>
+      <button class="filter-btn" onclick="setFilter('cardio', this)">Cardiology</button>
+      <button class="filter-btn" onclick="setFilter('maternal', this)">Maternal</button>
+      <button class="filter-btn" onclick="setFilter('emergency', this)">Emergency</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="chart-grid">
+    <div class="chart-card wide">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Monthly admissions and discharge rate</div>
+          <div class="chart-sub">Jan – Jun 2025</div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:#2a78d6"></span>Admissions</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#1baf7a"></span>Discharges</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#eda100"></span>Readmissions</span>
+        </div>
+      </div>
+      <div style="position:relative;width:100%;height:240px;">
+        <canvas id="admissionsChart" role="img" aria-label="Line chart of monthly admissions, discharges and readmissions Jan to Jun 2025">Monthly hospital flow data from January to June 2025.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Top diagnoses</div>
+          <div class="chart-sub">By patient count</div>
+        </div>
+      </div>
+      <div style="position:relative;width:100%;height:240px;">
+        <canvas id="diagnosisChart" role="img" aria-label="Horizontal bar chart of top diagnoses by patient count">Top diagnoses ranked by number of patients.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Patient outcomes</div>
+          <div class="chart-sub">Q2 2025 distribution</div>
+        </div>
+        <div class="legend" style="flex-direction:column;gap:6px;">
+          <span class="legend-item"><span class="legend-dot" style="background:#1baf7a"></span>Recovered 68%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#2a78d6"></span>Ongoing 18%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#eda100"></span>Referred 9%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#e34948"></span>Critical 5%</span>
+        </div>
+      </div>
+      <div style="position:relative;width:100%;height:240px;">
+        <canvas id="outcomesChart" role="img" aria-label="Doughnut chart showing patient outcomes: 68% recovered, 18% ongoing, 9% referred, 5% critical">Patient outcome breakdown for Q2 2025.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Ward performance summary</div>
+        <div class="chart-sub">Key metrics by department</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:24%">Ward</th>
+            <th style="width:14%">Patients</th>
+            <th style="width:18%">Avg stay (days)</th>
+            <th style="width:18%">Recovery rate</th>
+            <th style="width:14%">Beds used</th>
+            <th style="width:12%">Status</th>
+          </tr>
+        </thead>
+        <tbody id="wardTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>Built by Daniel Nyarku &nbsp;·&nbsp; AI &amp; Data Research Consultant &nbsp;·&nbsp; Accra, Ghana</span>
+    <span>Data is illustrative. Built with Chart.js &amp; vanilla JS.</span>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  all: {
+    kpis: [
+      { label: 'Total patients', value: '4,812', delta: '+8.3% vs Q1', dir: 'up' },
+      { label: 'Avg length of stay', value: '6.2d', delta: '-0.4d vs Q1', dir: 'up' },
+      { label: 'Recovery rate', value: '68%', delta: '+3.1% vs Q1', dir: 'up' },
+      { label: 'Bed occupancy', value: '81%', delta: '+2% vs Q1', dir: 'neutral' },
+      { label: 'Readmission rate', value: '9.4%', delta: '-1.2% vs Q1', dir: 'up' },
+    ],
+    admissions: [420,388,512,475,490,527],
+    discharges: [390,360,480,445,461,498],
+    readmissions: [42,38,50,44,47,51],
+    diagnoses: { labels: ['Malaria','Hypertension','Diabetes','Pneumonia','Typhoid','Anaemia'], data: [820,654,510,388,312,290] },
+    outcomes: [68,18,9,5],
+    wards: [
+      { name:'Cardiology', patients:842, stay:7.1, recovery:'71%', beds:'88%', status:'warning' },
+      { name:'Maternal', patients:1104, stay:3.8, recovery:'96%', beds:'79%', status:'success' },
+      { name:'Emergency', patients:976, stay:2.1, recovery:'61%', beds:'94%', status:'danger' },
+      { name:'General medicine', patients:1890, stay:5.4, recovery:'64%', beds:'76%', status:'success' },
+    ]
+  },
+  cardio: {
+    kpis: [
+      { label: 'Total patients', value: '842', delta: '+5.1% vs Q1', dir: 'up' },
+      { label: 'Avg length of stay', value: '7.1d', delta: '-0.2d vs Q1', dir: 'up' },
+      { label: 'Recovery rate', value: '71%', delta: '+2.4% vs Q1', dir: 'up' },
+      { label: 'Bed occupancy', value: '88%', delta: '+4% vs Q1', dir: 'neutral' },
+      { label: 'Readmission rate', value: '12%', delta: '+0.3% vs Q1', dir: 'down' },
+    ],
+    admissions: [72,65,88,80,84,90],
+    discharges: [65,58,80,74,78,84],
+    readmissions: [9,8,11,10,10,11],
+    diagnoses: { labels: ['Hypertension','Heart failure','Arrhythmia','Angina','Stroke','Other'], data: [320,210,140,88,52,32] },
+    outcomes: [71,15,9,5],
+    wards: [
+      { name:'Cardiology ICU', patients:210, stay:9.2, recovery:'58%', beds:'96%', status:'danger' },
+      { name:'Cardiology general', patients:632, stay:6.4, recovery:'76%', beds:'84%', status:'warning' },
+    ]
+  },
+  maternal: {
+    kpis: [
+      { label: 'Total patients', value: '1,104', delta: '+10.2% vs Q1', dir: 'up' },
+      { label: 'Avg length of stay', value: '3.8d', delta: '-0.3d vs Q1', dir: 'up' },
+      { label: 'Recovery rate', value: '96%', delta: '+1.1% vs Q1', dir: 'up' },
+      { label: 'Bed occupancy', value: '79%', delta: '-1% vs Q1', dir: 'up' },
+      { label: 'Readmission rate', value: '3.2%', delta: '-0.8% vs Q1', dir: 'up' },
+    ],
+    admissions: [168,155,198,184,190,209],
+    discharges: [162,150,191,178,184,202],
+    readmissions: [5,5,6,6,6,7],
+    diagnoses: { labels: ['Normal delivery','C-section','Pre-eclampsia','Gestational DM','Anaemia','Preterm'], data: [420,290,160,110,74,50] },
+    outcomes: [96,2,1,1],
+    wards: [
+      { name:'Antenatal', patients:440, stay:4.1, recovery:'97%', beds:'77%', status:'success' },
+      { name:'Postnatal', patients:664, stay:3.2, recovery:'95%', beds:'81%', status:'success' },
+    ]
+  },
+  emergency: {
+    kpis: [
+      { label: 'Total patients', value: '976', delta: '+6.8% vs Q1', dir: 'up' },
+      { label: 'Avg length of stay', value: '2.1d', delta: '-0.1d vs Q1', dir: 'up' },
+      { label: 'Recovery rate', value: '61%', delta: '+1.9% vs Q1', dir: 'up' },
+      { label: 'Bed occupancy', value: '94%', delta: '+3% vs Q1', dir: 'neutral' },
+      { label: 'Readmission rate', value: '14.1%', delta: '-0.5% vs Q1', dir: 'up' },
+    ],
+    admissions: [148,136,180,165,172,185],
+    discharges: [130,120,160,148,155,166],
+    readmissions: [22,20,26,24,25,27],
+    diagnoses: { labels: ['Trauma','Malaria','Poisoning','Fractures','Burns','Sepsis'], data: [280,220,130,118,78,62] },
+    outcomes: [61,22,11,6],
+    wards: [
+      { name:'Emergency triage', patients:976, stay:2.1, recovery:'61%', beds:'94%', status:'danger' },
+    ]
+  }
+};
+
+let charts = {};
+
+function renderKPIs(d) {
+  const icons = { up: 'ti-trending-up', down: 'ti-trending-down', neutral: 'ti-minus' };
+  document.getElementById('kpiGrid').innerHTML = d.kpis.map(k => `
+    <div class="kpi">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-delta ${k.dir}">
+        <i class="ti ${icons[k.dir]}" aria-hidden="true"></i> ${k.delta}
+      </div>
+    </div>`).join('');
+}
+
+function renderTable(d) {
+  const statusMap = { success: ['badge-success','Stable'], warning: ['badge-warning','Watch'], danger: ['badge-danger','High load'] };
+  document.getElementById('wardTable').innerHTML = d.wards.map(w => {
+    const [cls, label] = statusMap[w.status];
+    return `<tr>
+      <td style="font-weight:500">${w.name}</td>
+      <td>${w.patients.toLocaleString()}</td>
+      <td>${w.stay}</td>
+      <td>${w.recovery}</td>
+      <td>${w.beds}</td>
+      <td><span class="badge ${cls}">${label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderCharts(d) {
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? '#2c2c2a' : '#e1e0d9';
+  const tickColor = '#898781';
+
+  destroyChart('admissionsChart');
+  destroyChart('diagnosisChart');
+  destroyChart('outcomesChart');
+
+  charts['admissionsChart'] = new Chart(document.getElementById('admissionsChart'), {
+    type: 'line',
+    data: {
+      labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets: [
+        { label:'Admissions', data:d.admissions, borderColor:'#2a78d6', backgroundColor:'rgba(42,120,214,0.08)', borderWidth:2, pointRadius:4, pointBackgroundColor:'#2a78d6', tension:0.35, fill:true },
+        { label:'Discharges', data:d.discharges, borderColor:'#1baf7a', backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:'#1baf7a', tension:0.35 },
+        { label:'Readmissions', data:d.readmissions, borderColor:'#eda100', backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:'#eda100', tension:0.35, borderDash:[4,3] },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, tooltip:{ mode:'index', intersect:false } },
+      scales:{
+        x:{ grid:{ color:gridColor }, ticks:{ color:tickColor, font:{ size:12 } } },
+        y:{ grid:{ color:gridColor }, ticks:{ color:tickColor, font:{ size:12 } }, beginAtZero:false }
+      }
+    }
+  });
+
+  charts['diagnosisChart'] = new Chart(document.getElementById('diagnosisChart'), {
+    type:'bar',
+    data:{
+      labels:d.diagnoses.labels,
+      datasets:[{ label:'Patients', data:d.diagnoses.data, backgroundColor:'#2a78d6', borderRadius:4, borderSkipped:false }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{ color:gridColor }, ticks:{ color:tickColor, font:{ size:11 } } },
+        y:{ grid:{ display:false }, ticks:{ color:tickColor, font:{ size:11 } } }
+      }
+    }
+  });
+
+  charts['outcomesChart'] = new Chart(document.getElementById('outcomesChart'), {
+    type:'doughnut',
+    data:{
+      labels:['Recovered','Ongoing','Referred','Critical'],
+      datasets:[{ data:d.outcomes, backgroundColor:['#1baf7a','#2a78d6','#eda100','#e34948'], borderWidth:3, borderColor: isDark ? '#242423' : '#ffffff' }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'65%',
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } } }
+    }
+  });
+}
+
+function setFilter(f, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const d = DATA[f];
+  renderKPIs(d);
+  renderCharts(d);
+  renderTable(d);
+}
+
+renderKPIs(DATA.all);
+renderTable(DATA.all);
+renderCharts(DATA.all);
+</script>
+</body>
+</html>
