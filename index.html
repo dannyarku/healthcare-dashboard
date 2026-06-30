@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+ 
     :root {
       --surface-0: #f4f3ef;
       --surface-1: #f0efeb;
@@ -31,7 +31,7 @@
       --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
       --grid-color: #e1e0d9;
     }
-
+ 
     @media (prefers-color-scheme: dark) {
       :root {
         --surface-0: #111110;
@@ -54,7 +54,7 @@
         --grid-color: #2c2c2a;
       }
     }
-
+ 
     body {
       font-family: var(--font-sans);
       background: var(--surface-0);
@@ -62,9 +62,9 @@
       min-height: 100vh;
       padding: 2rem 1.5rem;
     }
-
+ 
     .dash { max-width: 1100px; margin: 0 auto; }
-
+ 
     .top-bar {
       display: flex; align-items: flex-start;
       justify-content: space-between;
@@ -85,7 +85,7 @@
       background: var(--bg-accent); color: var(--text-accent);
       border-color: var(--border-accent);
     }
-
+ 
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -101,7 +101,7 @@
     .kpi-delta.up { color: var(--text-success); }
     .kpi-delta.down { color: var(--text-danger); }
     .kpi-delta.neutral { color: var(--text-muted); }
-
+ 
     .chart-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -122,7 +122,7 @@
     .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-secondary); }
     .legend-item { display: flex; align-items: center; gap: 5px; }
     .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-
+ 
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
     th {
@@ -134,7 +134,7 @@
     td { padding: 10px 12px; color: var(--text-primary); border-bottom: 0.5px solid var(--border); }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface-1); }
-
+ 
     .badge {
       display: inline-block; font-size: 11px; font-weight: 500;
       padding: 3px 9px; border-radius: 20px;
@@ -142,14 +142,41 @@
     .badge-success { background: var(--bg-success); color: var(--text-success); }
     .badge-warning { background: var(--bg-warning); color: var(--text-warning); }
     .badge-danger { background: var(--bg-danger); color: var(--text-danger); }
-
+ 
+    .insights-card {
+      background: var(--surface-2);
+      border: 0.5px solid var(--border);
+      border-radius: 12px; padding: 1.25rem 1.5rem;
+      margin-bottom: 12px;
+    }
+    .insights-header { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+    .insights-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--bg-accent); color: var(--text-accent);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .insight-row {
+      display: flex; gap: 12px; padding: 12px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .insight-row:last-child { border-bottom: none; }
+    .insight-tag {
+      flex-shrink: 0; font-size: 11px; font-weight: 500;
+      padding: 3px 9px; border-radius: 20px; height: fit-content; white-space: nowrap;
+    }
+    .insight-tag.driver { background: var(--bg-accent); color: var(--text-accent); }
+    .insight-tag.risk { background: var(--bg-danger); color: var(--text-danger); }
+    .insight-tag.positive { background: var(--bg-success); color: var(--text-success); }
+    .insight-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+    .insight-text strong { font-weight: 500; }
+ 
     .footer {
       margin-top: 2rem; padding-top: 1rem;
       border-top: 0.5px solid var(--border);
       font-size: 12px; color: var(--text-muted);
       display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
     }
-
+ 
     @media (max-width: 600px) {
       body { padding: 1rem; }
       .top-bar { flex-direction: column; }
@@ -159,7 +186,7 @@
 </head>
 <body>
 <div class="dash">
-
+ 
   <div class="top-bar">
     <div>
       <div class="dash-title">Healthcare analytics dashboard</div>
@@ -172,9 +199,9 @@
       <button class="filter-btn" onclick="setFilter('emergency', this)">Emergency</button>
     </div>
   </div>
-
+ 
   <div class="kpi-grid" id="kpiGrid"></div>
-
+ 
   <div class="chart-grid">
     <div class="chart-card wide">
       <div class="chart-header">
@@ -192,7 +219,7 @@
         <canvas id="admissionsChart" role="img" aria-label="Line chart of monthly admissions, discharges and readmissions Jan to Jun 2025">Monthly hospital flow data from January to June 2025.</canvas>
       </div>
     </div>
-
+ 
     <div class="chart-card">
       <div class="chart-header">
         <div>
@@ -204,7 +231,7 @@
         <canvas id="diagnosisChart" role="img" aria-label="Horizontal bar chart of top diagnoses by patient count">Top diagnoses ranked by number of patients.</canvas>
       </div>
     </div>
-
+ 
     <div class="chart-card">
       <div class="chart-header">
         <div>
@@ -223,7 +250,18 @@
       </div>
     </div>
   </div>
-
+ 
+  <div class="insights-card">
+    <div class="insights-header">
+      <div class="insights-icon"><i class="ti ti-bulb" style="font-size:16px;" aria-hidden="true"></i></div>
+      <div>
+        <div class="chart-title">What's driving these numbers</div>
+        <div class="chart-sub">Pattern analysis, not just metrics</div>
+      </div>
+    </div>
+    <div id="insightsList"></div>
+  </div>
+ 
   <div class="chart-card">
     <div class="chart-header">
       <div>
@@ -247,13 +285,13 @@
       </table>
     </div>
   </div>
-
+ 
   <div class="footer">
     <span>Built by Daniel Nyarku &nbsp;·&nbsp; AI &amp; Data Research Consultant &nbsp;·&nbsp; Accra, Ghana</span>
     <span>Data is illustrative. Built with Chart.js &amp; vanilla JS.</span>
   </div>
 </div>
-
+ 
 <script>
 const DATA = {
   all: {
@@ -274,6 +312,12 @@ const DATA = {
       { name:'Maternal', patients:1104, stay:3.8, recovery:'96%', beds:'79%', status:'success' },
       { name:'Emergency', patients:976, stay:2.1, recovery:'61%', beds:'94%', status:'danger' },
       { name:'General medicine', patients:1890, stay:5.4, recovery:'64%', beds:'76%', status:'success' },
+    ],
+    insights: [
+      { tag: 'driver', text: '<strong>Occupancy rose to 81% in Q2</strong> mainly because admissions grew 25% from January to June, while discharge throughput only grew 22% over the same period — the gap between the two is what pushed beds to capacity, not a single event.' },
+      { tag: 'risk', text: '<strong>Emergency has the lowest recovery rate (61%)</strong> and the highest bed occupancy (94%). High patient volume combined with the shortest average stay (2.1 days) suggests patients are being moved out fast without full stabilization — worth checking referral and transfer-out rates.' },
+      { tag: 'positive', text: '<strong>Maternal ward outperforms every department</strong> with a 96% recovery rate at only 79% bed occupancy. This ward is operating below capacity while delivering the best outcomes — a model worth studying and possibly replicating in other wards.' },
+      { tag: 'driver', text: '<strong>Readmissions dropped to 9.4%</strong> even as total patients rose 8.3%. This usually signals improved discharge planning or follow-up care, not just a quieter quarter — discharge protocol changes are a likely cause worth confirming with ward staff.' },
     ]
   },
   cardio: {
@@ -292,6 +336,11 @@ const DATA = {
     wards: [
       { name:'Cardiology ICU', patients:210, stay:9.2, recovery:'58%', beds:'96%', status:'danger' },
       { name:'Cardiology general', patients:632, stay:6.4, recovery:'76%', beds:'84%', status:'warning' },
+    ],
+    insights: [
+      { tag: 'risk', text: '<strong>Cardiology ICU recovery sits at just 58%</strong>, far below the general cardiology ward (76%). At 96% bed occupancy and the longest average stay in the department (9.2 days), this ward is both the most strained and the lowest-performing — a strong candidate for added staffing or step-down capacity.' },
+      { tag: 'driver', text: '<strong>Bed occupancy hit 88% this quarter</strong>, the highest of any ward shown, because heart failure and arrhythmia cases grew together rather than any single diagnosis spiking — the combined caseload is what is pushing capacity, not one driver.' },
+      { tag: 'risk', text: '<strong>Readmission rate increased slightly to 12%</strong> even as overall patient volume grew only 5%. A readmission rate rising faster than admissions usually points to discharge timing or follow-up gaps rather than simply more patients coming through.' },
     ]
   },
   maternal: {
@@ -310,6 +359,11 @@ const DATA = {
     wards: [
       { name:'Antenatal', patients:440, stay:4.1, recovery:'97%', beds:'77%', status:'success' },
       { name:'Postnatal', patients:664, stay:3.2, recovery:'95%', beds:'81%', status:'success' },
+    ],
+    insights: [
+      { tag: 'positive', text: '<strong>Maternal recovery rate leads the hospital at 96%</strong>, with both antenatal (97%) and postnatal (95%) wards performing consistently. Bed occupancy stays under 81% across both — the ward is not stretched thin, which is likely a direct contributor to the high outcomes.' },
+      { tag: 'driver', text: '<strong>Patient volume grew 10.2%</strong>, the fastest of any department, yet average stay actually shortened slightly. Faster throughput without a drop in recovery rate suggests the ward is genuinely becoming more efficient, not just busier.' },
+      { tag: 'positive', text: '<strong>Readmission rate fell to 3.2%</strong>, the lowest across all wards. Combined with a low caesarean and pre-eclampsia caseload relative to normal delivery volume, this points to strong antenatal screening catching risk factors early.' },
     ]
   },
   emergency: {
@@ -327,12 +381,17 @@ const DATA = {
     outcomes: [61,22,11,6],
     wards: [
       { name:'Emergency triage', patients:976, stay:2.1, recovery:'61%', beds:'94%', status:'danger' },
+    ],
+    insights: [
+      { tag: 'risk', text: '<strong>Emergency has the highest bed occupancy in the hospital at 94%</strong>, driven primarily by trauma cases, which make up the largest diagnosis group ahead of malaria and poisoning combined. This single category is the clearest lever for relieving pressure on the ward.' },
+      { tag: 'risk', text: '<strong>Readmission rate sits at 14.1%</strong>, the highest of any department, while average stay is the shortest at 2.1 days. Short stays combined with high readmissions often signal patients being discharged before full stabilization — worth reviewing discharge criteria specifically for trauma cases.' },
+      { tag: 'driver', text: '<strong>Recovery rate of 61% is the lowest hospital-wide</strong>, but this is partly structural: emergency wards by nature handle the most acute, unpredictable cases. The more useful comparison is the trend over time rather than against other wards directly.' },
     ]
   }
 };
-
+ 
 let charts = {};
-
+ 
 function renderKPIs(d) {
   const icons = { up: 'ti-trending-up', down: 'ti-trending-down', neutral: 'ti-minus' };
   document.getElementById('kpiGrid').innerHTML = d.kpis.map(k => `
@@ -344,7 +403,7 @@ function renderKPIs(d) {
       </div>
     </div>`).join('');
 }
-
+ 
 function renderTable(d) {
   const statusMap = { success: ['badge-success','Stable'], warning: ['badge-warning','Watch'], danger: ['badge-danger','High load'] };
   document.getElementById('wardTable').innerHTML = d.wards.map(w => {
@@ -359,20 +418,29 @@ function renderTable(d) {
     </tr>`;
   }).join('');
 }
-
+ 
+function renderInsights(d) {
+  const tagLabels = { driver: 'Pattern', risk: 'Risk', positive: 'Strength' };
+  document.getElementById('insightsList').innerHTML = d.insights.map(i => `
+    <div class="insight-row">
+      <span class="insight-tag ${i.tag}">${tagLabels[i.tag]}</span>
+      <span class="insight-text">${i.text}</span>
+    </div>`).join('');
+}
+ 
 function destroyChart(id) {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
 }
-
+ 
 function renderCharts(d) {
   const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const gridColor = isDark ? '#2c2c2a' : '#e1e0d9';
   const tickColor = '#898781';
-
+ 
   destroyChart('admissionsChart');
   destroyChart('diagnosisChart');
   destroyChart('outcomesChart');
-
+ 
   charts['admissionsChart'] = new Chart(document.getElementById('admissionsChart'), {
     type: 'line',
     data: {
@@ -392,7 +460,7 @@ function renderCharts(d) {
       }
     }
   });
-
+ 
   charts['diagnosisChart'] = new Chart(document.getElementById('diagnosisChart'), {
     type:'bar',
     data:{
@@ -408,7 +476,7 @@ function renderCharts(d) {
       }
     }
   });
-
+ 
   charts['outcomesChart'] = new Chart(document.getElementById('outcomesChart'), {
     type:'doughnut',
     data:{
@@ -421,7 +489,7 @@ function renderCharts(d) {
     }
   });
 }
-
+ 
 function setFilter(f, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -429,11 +497,14 @@ function setFilter(f, btn) {
   renderKPIs(d);
   renderCharts(d);
   renderTable(d);
+  renderInsights(d);
 }
-
+ 
 renderKPIs(DATA.all);
 renderTable(DATA.all);
 renderCharts(DATA.all);
+renderInsights(DATA.all);
 </script>
 </body>
 </html>
+ 
